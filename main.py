@@ -3,10 +3,13 @@ import re
 from ftplib import FTP, error_perm
 import os
 import zipfile
+
+from dotenv import load_dotenv
 from tqdm import tqdm
 import inspect
+import os
 
-
+load_dotenv()
 
 class Bcolors:
     HEADER = '\033[95m'
@@ -26,7 +29,9 @@ process_map = {
     "create_zip_archive": "Archive Creation Process",
     "clear_ftp_directory": "FTP Directory Cleanup",
     "upload_folder_to_ftp": "FTP Upload Process",
-    "delete_contents": "FTP Directory Cleanup (Recursive)"
+    "delete_contents": "FTP Directory Cleanup (Recursive)",
+    "check_ftp_login": "FTP Auth and Permissions Check",
+    "safety_check": "Project Path Check"
 }
 def log_process(action, status="STARTED", details="", caller=None):
     """Log a process action with automatic caller mapping."""
@@ -187,9 +192,32 @@ def create_zip_archive(source,verbose:bool=False):
         return None
 
 def safety_check(basename):
+    """Check if the basename matches the required pattern 'tarX' where X is a digit."""
+    log_process(f"Validating project folder name: {basename}", status="STARTED")
     pattern = r'^tar\d$'
-    if not bool(re.match(pattern, os.path.basename(basename))):
+    if not re.match(pattern, os.path.basename(basename)):
+        log_process(action=f"Validation failed for folder name: {basename}", status="FINISHED", details="Invalid folder name")
         raise Exception("Project folder must be 'tarX' where X is the current exercise number you need to hand over.")
+    log_process(action=f"Validation passed for folder name: {basename}", status="FINISHED")
+
+def check_ftp_login(server, username, password, directory):
+    """Check if FTP connection and directory access are successful."""
+    try:
+        log_process(action=f"Connecting to FTP server: {server}", status="STARTED")
+        ftp = FTP(server)
+        ftp.login(user=username, passwd=password)
+        log_process(action=f"Login successful for FTP server: {server}", status="ONGOING")
+        log_process(action=f"Attempting to access directory: {directory}", status="ONGOING")
+        ftp.cwd(directory)
+        log_process(action=f"Successfully accessed directory: {directory}", status="FINISHED")
+        ftp.quit()
+        return True
+    except error_perm as e:
+        log_process(action=f"Permission error: {e}", status="FINISHED", details="Permission denied")
+        return False
+    except Exception as e:
+        log_process(action=f"An error occurred: {e}", status="FINISHED", details="Unknown error")
+        return False
 
 
 def main():
@@ -200,35 +228,47 @@ def main():
 
     1. Deletes all contents of remote ftp server's (ftp) 'tar' directory from past uploads
     2. Creates a '.zip' archive of your local project directory (deletes and creates if exists)
-    3. Upload project folder to ftp server (excluding '.git' and '.gitignore' files)
+    3. Upload project folder to ftp server (excluding '.git' and '.gitignore' files incase you have a repo there)
 
     For maximum comfort (and for this code to not do crazy stupid things):
     please rename your project folder with the current 'tarX' you are working on.
     I don't know what happens if you don't and I take 0 responsibility for it.
     Don't try taking off the safety check. It's meant to protect you from blowing off your foot.
+
+    P.S. If you want to contribute something please feel free to use a .env file and just continue working on it.
     """
 
 
     # full path to project directory (r"C:\...\tarX") X={1, 2, 3, ..., n}
-    source = r"<YOUR PATH HERE>"
+    source = r"C:\...\tarX"        # change this to your path to project
+    source = os.getenv("source")   # DELETE THIS LINE
 
     # PERSONAL DETAILS: (ex. "John Doe-123412341")
-    first_person = "<FIRST_PERSON_NAME>-<FIRST_PERSON_ID_NUMBER"
-    second_person = "<SECOND_PERSON_NAME>-<SECOND_PERSON_NAME"
+    first_person = "<FIRST_PERSON_NAME>-<FIRST_PERSON_ID_NUMBER>"
+    second_person = "<SECOND_PERSON_NAME>-<SECOND_PERSON_NAME>"
+
+    first_person = os.getenv("first_person")   # DELETE THIS LINE
+    second_person = os.getenv("second_person") # DELETE THIS LINE
 
     # FTP DETAILS:
-    ftp_server = "<RUPPIN_SERVER_IP>" # change to RUPPIN SERVER IP (xxx.xxx.xxx.xxx)
-    ftp_username = "<FTP-GROUP_NAME>" # change to: "cgroupX"
-    ftp_password = "<FTP-GROUP_PASSWORD>" # change to "cgroup_PASS"
+    ftp_server = "<RUPPIN_SERVER_IP>"          # change to RUPPIN SERVER IP (xxx.xxx.xxx.xxx)
+    ftp_username = "<FTP-GROUP_NAME>"          # change to: "cgroupX"
+    ftp_password = "<FTP-GROUP_PASSWORD>"      # change to "cgroup_PASS"
+
+    ftp_server = os.getenv("ftp_server")       # DELETE THIS LINE
+    ftp_username = os.getenv("ftp_username")   # DELETE THIS LINE
+    ftp_password = os.getenv("ftp_password")   # DELETE THIS LINE
 
 
     source = normalize_path(source)
 
     # Mandatory safety check
     tar = os.path.basename(source)
-    safety_check(tar)
-
     remote_directory = f"/{ftp_username}/test1/{os.path.basename(source)}/"
+    safety_check(tar)
+    if not check_ftp_login(ftp_server, ftp_username, ftp_password, remote_directory):
+        return
+
 
     clear_ftp_directory(ftp_server, ftp_username, ftp_password, remote_directory, verbose=False)
 
