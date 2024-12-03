@@ -23,7 +23,7 @@
 - ה. **🔑 ftp_username**: שם המשתמש של ה-FTP שלכם (לדוגמה: `cgroupX`).
 - ו. **🔒 ftp_password**: הסיסמה שלכם ל-FTP (לדוגמה: `cgroup_PASS`).
 
-דוגמה לקובץ לפרטים שלכם בקובץ:
+דוגמה לפרטים שלכם בקובץ:
 ```
 source= r"C:\path\to\tarX" # שימו לב לr בתחילת המחרוזת
 first_person="דוד-123456789" 
