@@ -24,7 +24,6 @@ class Bcolors:
     UNDERLINE = '\033[4m'
 
 
-
 process_map = {
     "main": "Main Application Flow",
     "create_zip_archive": "Archive Creation Process",
@@ -61,7 +60,6 @@ def connect_ftp(server, username, password):
     ftp.login(user=username, passwd=password)
     log_process(action=f"{Bcolors.OKGREEN}Connected to FTP server: {server}", status="ONGOING", caller=caller)
     return ftp
-
 
 def upload_file_with_progress(ftp, file_path, remote_file_name):
     """Upload a file to the FTP server with a progress bar."""
@@ -158,7 +156,6 @@ def upload_folder_to_ftp(server, username, password, folder_path, remote_path):
 
     except Exception as e:
         print(f"An error occurred: {e}")
-
 
 def create_zip_archive(source,verbose:bool=False):
     """Create a zip archive of a folder, excluding .git directory."""
@@ -288,7 +285,6 @@ def main():
     print("ClientRuppin@gmail.com")
     print(f"ZIP: https://proj.ruppin.ac.il/{ftp_username}/test1/{tar}/{tar}.zip")
     print(f"Web: https://proj.ruppin.ac.il/{ftp_username}/test1/{tar}/")
-
 
 if __name__ == "__main__":
     main()
