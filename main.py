@@ -1,5 +1,6 @@
 import collections
 import re
+import socket
 from ftplib import FTP, error_perm
 import os
 import zipfile
@@ -214,10 +215,13 @@ def check_ftp_login(server, username, password, directory):
         return True
     except error_perm as e:
         log_process(action=f"Permission error: {e}", status="FINISHED", details="Permission denied")
-        return False
+        raise PermissionError(f"Permission error: {e}")
+    except socket.gaierror as e:
+        log_process(action=f"FTP connection error: {e}, please check the FTP IP address and try again", status="FINISHED", details="")
+        raise ConnectionError(f"FTP connection error: {e}, please check the FTP IP address and try again")
     except Exception as e:
-        log_process(action=f"An error occurred: {e}", status="FINISHED", details="Unknown error")
-        return False
+        log_process(action=f"An error occurred: ({e}), please screenshot the error + code and send to developer.", status="FINISHED", details="Unknown error")
+        raise Exception(f"An error occurred: {e}, please screenshot the error + code and send to developer.")
 
 
 def main():
