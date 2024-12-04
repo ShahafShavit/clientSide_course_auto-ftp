@@ -68,7 +68,3 @@ ftp_password="mySecretPassword"
 3. 🌐 קישור לפרויקט שלכם ברשת.
 
 בהצלחה! 🚀
-
---- 
-
-Would you like the final version as a `.txt` file? 😊
